@@ -11,6 +11,7 @@
         "@creit.tech/stellar-wallets-kit": "^1.8.0",
         "@stellar/freighter-api": "^6.0.1",
         "@stellar/stellar-sdk": "^14.4.3",
+        "@tailwindcss/oxide-linux-x64-gnu": "^4.2.2",
         "@tailwindcss/postcss": "^4.2.2",
         "lucide-react": "^0.447.0",
         "next": "14.2.3",
@@ -2471,7 +2472,6 @@
         "x64"
       ],
       "license": "MIT",
-      "optional": true,
       "os": [
         "linux"
       ],
