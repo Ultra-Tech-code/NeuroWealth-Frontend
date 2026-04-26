@@ -2,8 +2,7 @@
 
 import { TransactionHistory } from "@/components/transactions/TransactionHistory";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
-import { Suspense, useState } from "react";
-import { useState, useEffect } from "react";
+import { Suspense, useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { Clock, AlertTriangle, Loader2 } from "lucide-react";
 
