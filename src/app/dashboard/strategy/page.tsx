@@ -3,6 +3,8 @@ import { CheckCircle, Shield, TrendingUp, Zap } from "lucide-react";
 import StrategyLoading from "./loading";
 import { cn } from "@/lib/utils";
 import type { Strategy } from "@/types";
+import { StrategySelector } from "@/components/strategies/StrategySelector";
+
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Strategy — NeuroWealth" };
@@ -147,6 +149,7 @@ export default function StrategyPage() {
   return (
     <Suspense fallback={<StrategyLoading />}>
       <StrategyContent />
+              <StrategySelector />
     </Suspense>
   );
 }

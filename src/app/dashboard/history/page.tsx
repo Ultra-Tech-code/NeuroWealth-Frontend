@@ -1,6 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { TransactionHistory } from "@/components/transactions/TransactionHistory";
+import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
+import { Suspense, useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { Clock, AlertTriangle, Loader2 } from "lucide-react";
 
@@ -8,6 +10,7 @@ export const dynamic = "force-dynamic";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { TableSkeleton } from "@/components/ui/Skeleton";
 import { useSandbox } from "@/contexts/SandboxContext";
+
 
 export default function HistoryPage() {
   const searchParams = useSearchParams();
@@ -100,7 +103,6 @@ export default function HistoryPage() {
       </div>
     );
   }
-
   return (
     <div className="px-6 pt-8">
       <div className="flex items-center justify-between pb-4">
@@ -139,6 +141,8 @@ export default function HistoryPage() {
           </div>
         </div>
       </div>
+              <TransactionHistory />
+
     </div>
   );
 }
