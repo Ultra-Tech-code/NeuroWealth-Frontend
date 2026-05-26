@@ -7,7 +7,8 @@ import React, {
   useEffect,
   useCallback,
 } from "react";
-import { AuthSession, mockAuth } from "@/lib/mock-auth";
+import type { AuthSession } from "@/lib/auth-adapter";
+import { getAuthAdapter } from "@/lib/auth-provider-factory";
 
 import { useRouter } from "next/navigation";
 import {
@@ -46,17 +47,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true); // true until we've checked storage
   const router = useRouter();
+  const authAdapter = getAuthAdapter();
 
   /** Derive user state from the persisted session. */
   const syncFromStorage = useCallback(() => {
-    const session: AuthSession | null = mockAuth.getSession();
+    const session: AuthSession | null = authAdapter.getSession();
     setUser(session ? session.user : null);
     if (session) {
       setSessionCookie(session);
     } else {
       clearSessionCookie();
     }
-  }, []);
+  }, [authAdapter]);
 
   useEffect(() => {
     // Hydrate on mount
@@ -81,7 +83,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signIn = async (email: string, password: string) => {
     setLoading(true);
     try {
-      const session = await mockAuth.signIn(email, password);
+      const session = await authAdapter.signIn(email, password);
       setUser(session.user);
       setSessionCookie(session);
     } finally {
@@ -92,7 +94,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signUp = async (email: string, name: string, password: string) => {
     setLoading(true);
     try {
-      const session = await mockAuth.signUp(email, name, password);
+      const session = await authAdapter.signUp(email, name, password);
       setUser(session.user);
       setSessionCookie(session);
     } finally {
@@ -101,7 +103,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signOut = () => {
-    mockAuth.signOut();
+    authAdapter.signOut();
     clearSessionCookie();
     setUser(null);
     router.push(SIGN_IN_PATH);

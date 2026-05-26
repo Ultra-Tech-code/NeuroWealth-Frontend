@@ -4,6 +4,8 @@
  * Simulates authentication for development/demo purposes.
  * Uses SESSION_STORAGE_KEY from auth-constants so the key is
  * never hardcoded in more than one place.
+ *
+ * Implements the AuthAdapter interface to allow swapping with real backend.
  */
 
 import { SESSION_STORAGE_KEY } from "./auth-constants";
@@ -12,12 +14,9 @@ import {
   type MockAuthUserRecord,
 } from "./user";
 import type { User } from "@/types";
+import type { AuthAdapter, AuthSession } from "./auth-adapter";
 
-export interface AuthSession {
-  user: User;
-  token: string;
-  expiresAt: number;
-}
+export type { AuthSession } from "./auth-adapter";
 
 const MOCK_USERS: Record<string, { password: string; user: MockAuthUserRecord }> = {
   "demo@neurowealth.app": {
@@ -82,7 +81,7 @@ function normalizeSession(value: unknown): AuthSession | null {
   };
 }
 
-export const mockAuth = {
+export const mockAuth: AuthAdapter = {
   /** Read the current session from localStorage (client-only). */
   getSession(): AuthSession | null {
     if (typeof window === "undefined") return null;
