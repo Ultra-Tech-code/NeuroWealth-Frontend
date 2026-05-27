@@ -8,12 +8,15 @@ import { AuditTableSkeleton } from "@/components/ui/Skeleton";
 
 type EventTypeFilter = "all" | AuditEvent["eventType"];
 
+const PAGE_SIZE = 20;
+
 export function AuditTrail() {
   const [events, setEvents] = useState<AuditEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<EventTypeFilter>("all");
   const [sortOrder, setSortOrder] = useState<"desc" | "asc">("desc");
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
 
   useEffect(() => {
     setLoading(true);
@@ -36,6 +39,10 @@ export function AuditTrail() {
       const diff = b.timestamp.getTime() - a.timestamp.getTime();
       return sortOrder === "desc" ? diff : -diff;
     });
+
+  const totalPages = Math.max(1, Math.ceil(filteredEvents.length / PAGE_SIZE));
+  const safePage = Math.min(page, totalPages);
+  const pagedEvents = filteredEvents.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
 
   const handleExport = async () => {
     const csv = await mockAuditService.exportAsCSV();
@@ -95,7 +102,7 @@ export function AuditTrail() {
           <Filter size={16} />
           <select
             value={filter}
-            onChange={(e) => setFilter(e.target.value as EventTypeFilter)}
+            onChange={(e) => { setFilter(e.target.value as EventTypeFilter); setPage(1); }}
             className="audit-select"
             aria-label="Filter events by type"
           >
@@ -113,7 +120,7 @@ export function AuditTrail() {
 
         <div className="audit-sort-group">
           <button
-            onClick={() => setSortOrder(sortOrder === "desc" ? "asc" : "desc")}
+            onClick={() => { setSortOrder(sortOrder === "desc" ? "asc" : "desc"); setPage(1); }}
             className="audit-sort-btn"
             aria-label={`Sort by date ${sortOrder === "desc" ? "ascending" : "descending"}`}
           >
@@ -143,7 +150,7 @@ export function AuditTrail() {
                 </td>
               </tr>
             ) : (
-              filteredEvents.map((event) => (
+              pagedEvents.map((event) => (
                 <tr key={event.id} className="audit-row">
                   <td>
                     <span className={`audit-badge ${eventTypeColors[event.eventType]}`}>
@@ -178,7 +185,7 @@ export function AuditTrail() {
         {filteredEvents.length === 0 ? (
           <div className="audit-empty-mobile">No events found</div>
         ) : (
-          filteredEvents.map((event) => (
+          pagedEvents.map((event) => (
             <div key={event.id} className="audit-card">
               <div className="audit-card-header">
                 <span className={`audit-badge ${eventTypeColors[event.eventType]}`}>
@@ -227,6 +234,31 @@ export function AuditTrail() {
           ))
         )}
       </div>
+
+      {/* Pagination controls */}
+      {totalPages > 1 && (
+        <div className="audit-pagination" role="navigation" aria-label="Audit trail pages">
+          <button
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            disabled={safePage === 1}
+            aria-label="Previous page"
+            className="audit-page-btn"
+          >
+            ‹
+          </button>
+          <span className="audit-page-info">
+            Page {safePage} of {totalPages}
+          </span>
+          <button
+            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            disabled={safePage === totalPages}
+            aria-label="Next page"
+            className="audit-page-btn"
+          >
+            ›
+          </button>
+        </div>
+      )}
 
       <style>{`
         .audit-trail-container {
@@ -500,6 +532,44 @@ export function AuditTrail() {
           padding: 32px 16px;
           color: #64748b;
           font-size: 14px;
+        }
+
+        .audit-pagination {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 16px;
+          padding: 12px 0 4px;
+        }
+
+        .audit-page-btn {
+          background: rgba(15, 23, 42, 0.6);
+          border: 1px solid rgba(148, 163, 184, 0.2);
+          border-radius: 8px;
+          color: #94a3b8;
+          width: 36px;
+          height: 36px;
+          font-size: 18px;
+          cursor: pointer;
+          transition: color 0.15s, border-color 0.15s;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .audit-page-btn:disabled {
+          opacity: 0.35;
+          cursor: default;
+        }
+
+        .audit-page-btn:not(:disabled):hover {
+          color: #e2e8f0;
+          border-color: rgba(148, 163, 184, 0.4);
+        }
+
+        .audit-page-info {
+          font-size: 13px;
+          color: #94a3b8;
         }
 
         /* Responsive */
