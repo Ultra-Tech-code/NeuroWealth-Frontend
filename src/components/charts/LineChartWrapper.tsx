@@ -3,10 +3,10 @@
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from "recharts";
 import { BaseChart, ChartTooltip } from "./BaseChart";
 import { chartTheme, chartDimensions } from "@/lib/chart-theme";
-import { ChartDataPoint } from "@/lib/mock-chart-data";
+import type { ChartDatum } from "@/lib/mock-chart-data";
 
-interface LineChartWrapperProps {
-  data: ChartDataPoint[];
+interface LineChartWrapperProps<T extends ChartDatum> {
+  data: T[];
   dataKey?: string;
   xAxisKey?: string;
   height?: number;
@@ -18,7 +18,7 @@ interface LineChartWrapperProps {
   formatter?: (value: any, name: string) => [string, string];
 }
 
-export function LineChartWrapper({
+export function LineChartWrapper<T extends ChartDatum = ChartDatum>({
   data,
   dataKey = "value",
   xAxisKey = "name",
@@ -29,7 +29,7 @@ export function LineChartWrapper({
   strokeWidth = 2,
   dot = false,
   formatter,
-}: LineChartWrapperProps) {
+}: LineChartWrapperProps<T>) {
   return (
     <BaseChart height={height}>
       <LineChart data={data} margin={chartDimensions.margin}>

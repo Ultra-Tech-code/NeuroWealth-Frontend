@@ -3,10 +3,10 @@
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from "recharts";
 import { BaseChart, ChartTooltip } from "./BaseChart";
 import { chartTheme, chartDimensions } from "@/lib/chart-theme";
-import { ChartDataPoint } from "@/lib/mock-chart-data";
+import type { ChartDatum } from "@/lib/mock-chart-data";
 
-interface BarChartWrapperProps {
-  data: ChartDataPoint[];
+interface BarChartWrapperProps<T extends ChartDatum> {
+  data: T[];
   dataKey?: string;
   xAxisKey?: string;
   height?: number;
@@ -17,7 +17,7 @@ interface BarChartWrapperProps {
   formatter?: (value: any, name: string) => [string, string];
 }
 
-export function BarChartWrapper({
+export function BarChartWrapper<T extends ChartDatum = ChartDatum>({
   data,
   dataKey = "value",
   xAxisKey = "name",
@@ -27,7 +27,7 @@ export function BarChartWrapper({
   color = chartTheme.colors.primary,
   barSize,
   formatter,
-}: BarChartWrapperProps) {
+}: BarChartWrapperProps<T>) {
   return (
     <BaseChart height={height}>
       <BarChart data={data} margin={chartDimensions.margin} barCategoryGap="20%">

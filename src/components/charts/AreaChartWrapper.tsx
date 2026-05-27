@@ -3,10 +3,10 @@
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from "recharts";
 import { BaseChart, ChartTooltip, usePrefersReducedMotion } from "./BaseChart";
 import { chartTheme, chartDimensions } from "@/lib/chart-theme";
-import { ChartDataPoint } from "@/lib/mock-chart-data";
+import type { ChartDatum } from "@/lib/mock-chart-data";
 
-interface AreaChartWrapperProps {
-  data: ChartDataPoint[];
+interface AreaChartWrapperProps<T extends ChartDatum> {
+  data: T[];
   dataKey?: string;
   xAxisKey?: string;
   height?: number;
@@ -17,7 +17,7 @@ interface AreaChartWrapperProps {
   formatter?: (value: any, name: string) => [string, string];
 }
 
-export function AreaChartWrapper({
+export function AreaChartWrapper<T extends ChartDatum = ChartDatum>({
   data,
   dataKey = "value",
   xAxisKey = "name",
@@ -27,7 +27,7 @@ export function AreaChartWrapper({
   fillOpacity = 0.3,
   color = chartTheme.colors.primary,
   formatter,
-}: AreaChartWrapperProps) {
+}: AreaChartWrapperProps<T>) {
   return (
     <BaseChart height={height}>
       <AreaChart data={data} margin={chartDimensions.margin}>

@@ -50,6 +50,10 @@ export function GlobalSearch({
 
   const rootRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  // Monotonic id for the latest in-flight search. A response is applied only
+  // when its id still matches, so a slow search can never overwrite a newer
+  // one (or results that were cleared / navigated away from).
+  const requestIdRef = useRef(0);
 
   useOnClickOutside(rootRef, () => {
     setIsOpen(false);
@@ -73,9 +77,9 @@ export function GlobalSearch({
   }, [query]);
 
   useEffect(() => {
-    let cancelled = false;
-
     if (!debouncedQuery) {
+      // Invalidate any in-flight search so a late response can't repopulate.
+      requestIdRef.current += 1;
       setResults(EMPTY_RESULTS);
       setErrorMessage(null);
       setIsLoading(false);
@@ -83,31 +87,33 @@ export function GlobalSearch({
       return;
     }
 
+    const requestId = ++requestIdRef.current;
     setIsLoading(true);
     setErrorMessage(null);
 
     getSearchDataProvider()
       .search(debouncedQuery)
       .then((grouped) => {
-        if (cancelled) return;
+        if (requestId !== requestIdRef.current) return;
         setResults(grouped);
         const nextFlat = flattenResults(grouped);
         setActiveIndex(nextFlat.length > 0 ? 0 : -1);
       })
       .catch(() => {
-        if (cancelled) return;
+        if (requestId !== requestIdRef.current) return;
         setResults(EMPTY_RESULTS);
         setActiveIndex(-1);
         setErrorMessage("Search is temporarily unavailable. Please try again.");
       })
       .finally(() => {
-        if (!cancelled) {
+        if (requestId === requestIdRef.current) {
           setIsLoading(false);
         }
       });
 
     return () => {
-      cancelled = true;
+      // A newer query (or unmount) supersedes this run; ignore its result.
+      requestIdRef.current += 1;
     };
   }, [debouncedQuery]);
 
@@ -127,14 +133,17 @@ export function GlobalSearch({
   };
 
   const clearQuery = () => {
+    requestIdRef.current += 1; // drop any in-flight search so it can't repopulate
     setQuery("");
     setResults(EMPTY_RESULTS);
     setErrorMessage(null);
+    setIsLoading(false);
     setActiveIndex(-1);
     inputRef.current?.focus();
   };
 
   const navigateToResult = (item: SearchResultItem) => {
+    requestIdRef.current += 1; // drop any in-flight search before navigating away
     router.push(item.href);
     setIsOpen(false);
     setQuery("");

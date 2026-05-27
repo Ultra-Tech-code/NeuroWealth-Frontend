@@ -3,11 +3,10 @@
 import { PieChart, Pie, Cell, Tooltip, Legend } from "recharts";
 import { BaseChart, ChartTooltip, usePrefersReducedMotion } from "./BaseChart";
 import { chartTheme, chartDimensions, getChartColor } from "@/lib/chart-theme";
-import { ChartDataPoint } from "@/lib/mock-chart-data";
-import { ChartTone } from "@/lib/portfolio";
+import type { AssetAllocationSlice } from "@/lib/mock-chart-data";
 
 interface DonutChartWrapperProps {
-  data: (ChartDataPoint & { tone?: ChartTone })[];
+  data: AssetAllocationSlice[];
   height?: number;
   innerRadius?: number;
   outerRadius?: number;
