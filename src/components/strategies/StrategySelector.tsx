@@ -21,6 +21,7 @@ import {
   loadStoredPreference,
   saveStoredPreference,
 } from "@/lib/strategies";
+import { apiRequest, ApiRequestError } from "@/lib/api-client";
 import { Button } from "@/components/ui/Button";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -466,16 +467,11 @@ export function StrategySelector() {
       return;
     }
 
-    fetch("/api/strategy", { cache: "no-store" })
-      .then((res) => {
-        if (!res.ok) throw new Error("Failed to load");
-        return res.json() as Promise<StrategyPreference>;
-      })
+    apiRequest<StrategyPreference>("/api/strategy", { timeoutMs: 8000 })
       .then((data) => {
         dispatch({ type: "LOAD_SUCCESS", strategy: data.strategy });
       })
       .catch(() => {
-        // Default to no preference selected
         dispatch({ type: "LOAD_SUCCESS", strategy: null });
       });
   }, []);
@@ -496,23 +492,19 @@ export function StrategySelector() {
     dispatch({ type: "SAVE_START" });
 
     try {
-      const res = await fetch("/api/strategy", {
+      await apiRequest<StrategyPreference>("/api/strategy", {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ strategy }),
-        cache: "no-store",
+        body: { strategy },
+        timeoutMs: 8000,
       });
-
-      if (!res.ok) {
-        const err = (await res.json()) as { message?: string };
-        throw new Error(err.message ?? `Request failed (${res.status})`);
-      }
 
       saveStoredPreference(strategy);
       dispatch({ type: "SAVE_SUCCESS", strategy });
     } catch (err: unknown) {
       const message =
-        err instanceof Error ? err.message : "Failed to save strategy. Please try again.";
+        err instanceof ApiRequestError
+          ? err.message
+          : "Failed to save strategy. Please try again.";
       dispatch({ type: "SAVE_ERROR", message });
     }
   }

@@ -1,8 +1,5 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
   reactStrictMode: true,
   staticPageGenerationTimeout: 0,
   // Compress responses with gzip for smaller transfer sizes

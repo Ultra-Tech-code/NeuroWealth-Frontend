@@ -17,6 +17,7 @@ import {
   HistoryStatus,
   TransactionHistoryPage,
 } from "@/lib/transaction-history";
+import { apiRequest } from "@/lib/api-client";
 import { formatTimestamp } from "@/lib/formatters";
 import { Button } from "@/components/ui/Button";
 
@@ -657,14 +658,10 @@ export function TransactionHistory() {
       pageSize: String(PAGE_SIZE),
     });
 
-    fetch(`/api/transaction-history?${params.toString()}`, {
-      cache: "no-store",
-      signal: controller.signal,
-    })
-      .then((res) => {
-        if (!res.ok) throw new Error(`Request failed (${res.status})`);
-        return res.json() as Promise<TransactionHistoryPage>;
-      })
+    apiRequest<TransactionHistoryPage>(
+      `/api/transaction-history?${params.toString()}`,
+      { signal: controller.signal, timeoutMs: 10000 },
+    )
       .then((payload) => {
         if (!controller.signal.aborted) {
           dispatchData({ type: "FETCH_SUCCESS", payload });

@@ -2,9 +2,16 @@ import { NextRequest, NextResponse } from "next/server";
 import {
   parseStrategyKind,
   StrategyPreference,
-  StrategyUpdatePayload,
 } from "@/lib/strategies";
 import { STORAGE_KEYS } from "@/lib/storage-keys";
+import {
+  ERROR_CODE,
+  HTTP_STATUS,
+  errorResponse,
+  readJsonBody,
+  successResponse,
+} from "@/lib/api-response";
+import { strategyUpdateSchema, zodErrorToDetails } from "@/lib/validation/api";
 
 const STRATEGY_COOKIE_KEY = STORAGE_KEYS.STRATEGY_PREFERENCE;
 
@@ -28,38 +35,45 @@ export async function GET(request: NextRequest) {
 
       if (res.ok) {
         const data = (await res.json()) as StrategyPreference;
-        return NextResponse.json(data, {
+        return NextResponse.json(successResponse(data), {
           headers: { "Cache-Control": "no-store" },
         });
       }
     } catch {
-      // fall through to mock
+      // fall through to local fallback
     }
   }
 
   const strategy = parseStrategyKind(
     request.cookies.get(STRATEGY_COOKIE_KEY)?.value ?? null,
   );
-  const body: StrategyPreference = { strategy };
-  return NextResponse.json(body, {
+  return NextResponse.json(successResponse<StrategyPreference>({ strategy }), {
     headers: { "Cache-Control": "no-store" },
   });
 }
 
 export async function PUT(request: NextRequest) {
+  const bodyResult = await readJsonBody(request);
+  if (!bodyResult.ok) return bodyResult.response;
+
+  const parsed = strategyUpdateSchema.safeParse(bodyResult.data);
+
+  if (!parsed.success) {
+    return NextResponse.json(
+      errorResponse(
+        ERROR_CODE.VALIDATION_ERROR,
+        "Invalid strategy value. Must be conservative, balanced, or growth.",
+        zodErrorToDetails(parsed.error),
+      ),
+      { status: HTTP_STATUS.UNPROCESSABLE_ENTITY },
+    );
+  }
+
+  const { strategy } = parsed.data;
+
   const apiBaseUrl = process.env.NEUROWEALTH_API_BASE_URL;
   const strategyPath =
     process.env.NEUROWEALTH_STRATEGY_PATH ?? "/strategy/preference";
-
-  const payload = (await request.json()) as Partial<StrategyUpdatePayload>;
-  const strategy = parseStrategyKind(payload.strategy ?? null);
-
-  if (!strategy) {
-    return NextResponse.json(
-      { message: "Invalid strategy value. Must be conservative, balanced, or growth." },
-      { status: 422 },
-    );
-  }
 
   if (apiBaseUrl) {
     try {
@@ -82,12 +96,12 @@ export async function PUT(request: NextRequest) {
         },
       });
     } catch {
-      // fall through to mock
+      // fall through to local fallback
     }
   }
 
-  const body: StrategyPreference = { strategy };
-  const response = NextResponse.json(body, {
+  const responseBody = successResponse<StrategyPreference>({ strategy });
+  const response = NextResponse.json(responseBody, {
     headers: { "Cache-Control": "no-store" },
   });
   response.cookies.set(STRATEGY_COOKIE_KEY, strategy, {
