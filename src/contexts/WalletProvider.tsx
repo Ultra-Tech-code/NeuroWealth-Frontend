@@ -1,6 +1,13 @@
-'use client';
+"use client";
 
-import React, { createContext, useContext, useState, useCallback, useEffect, ReactNode } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useCallback,
+  useEffect,
+  ReactNode,
+} from "react";
 import {
   Horizon,
   TransactionBuilder,
@@ -8,20 +15,21 @@ import {
   Networks,
   Asset,
   Memo,
-  BASE_FEE
-} from '@stellar/stellar-sdk';
+  BASE_FEE,
+} from "@stellar/stellar-sdk";
 import { ISupportedWallet } from "@creit.tech/stellar-wallets-kit";
-import { kit } from '../lib/stellar-wallet-kit';
+import { kit } from "../lib/stellar-wallet-kit";
 import {
   clearPersistedWalletState,
   persistWalletState,
   readPersistedWalletState,
-} from '@/lib/wallet-persistence';
+} from "@/lib/wallet-persistence";
 import {
   detectWalletNetworkMismatch,
   type WalletNetworkStatus,
-} from '@/lib/wallet-network-detection';
-import { formatConfiguredNetworkLabel } from '@/lib/stellar-network';
+} from "@/lib/wallet-network-detection";
+import { formatConfiguredNetworkLabel } from "@/lib/stellar-network";
+import { logger } from "@/lib/logger";
 
 const Server = Horizon.Server;
 
@@ -35,7 +43,7 @@ export interface Balance {
 export interface PaymentOptions {
   to: string;
   amount: string;
-  asset?: 'XLM' | { code: string; issuer: string };
+  asset?: "XLM" | { code: string; issuer: string };
   memo?: string;
   secret?: string;
 }
@@ -51,7 +59,9 @@ interface WalletContextState {
   connect: () => Promise<void>;
   disconnect: () => void;
   refreshBalances: () => Promise<void>;
-  sendPayment?: (opts: PaymentOptions) => Promise<Horizon.HorizonApi.SubmitTransactionResponse>;
+  sendPayment?: (
+    opts: PaymentOptions,
+  ) => Promise<Horizon.HorizonApi.SubmitTransactionResponse>;
 }
 
 interface WalletConfigContextState {
@@ -66,21 +76,25 @@ interface WalletProviderProps {
 }
 
 const WalletContext = createContext<WalletContextState | undefined>(undefined);
-const WalletConfigContext = createContext<WalletConfigContextState | undefined>(undefined);
+const WalletConfigContext = createContext<WalletConfigContextState | undefined>(
+  undefined,
+);
 export function WalletProvider({
   children,
-  horizonUrl = 'https://horizon-testnet.stellar.org',
-  network = Networks.TESTNET
+  horizonUrl = "https://horizon-testnet.stellar.org",
+  network = Networks.TESTNET,
 }: WalletProviderProps) {
   const [connected, setConnected] = useState(false);
   const [isRestoring, setIsRestoring] = useState(true);
   const [publicKey, setPublicKey] = useState<string>();
   const [walletName, setWalletName] = useState<string>();
   const [walletProviderId, setWalletProviderId] = useState<string>();
-  const [networkStatus, setNetworkStatus] = useState<WalletNetworkStatus>(() => ({
-    hasMismatch: false,
-    appNetworkLabel: formatConfiguredNetworkLabel(),
-  }));
+  const [networkStatus, setNetworkStatus] = useState<WalletNetworkStatus>(
+    () => ({
+      hasMismatch: false,
+      appNetworkLabel: formatConfiguredNetworkLabel(),
+    }),
+  );
   const [balances, setBalances] = useState<Balance[]>([]);
   const [server] = useState(() => new Server(horizonUrl));
 
@@ -120,18 +134,24 @@ export function WalletProvider({
             const account = await server.accounts().accountId(address).call();
             setBalances(account.balances);
           } catch (error: unknown) {
-            if (error && typeof error === 'object' && 'response' in error && (error as { response?: { status?: number } }).response?.status === 404) {
-              console.log(`Account ${address} not found. Fund it with XLM.`);
+            if (
+              error &&
+              typeof error === "object" &&
+              "response" in error &&
+              (error as { response?: { status?: number } }).response?.status ===
+                404
+            ) {
+              logger.info(`Account ${address} not found. Fund it with XLM.`);
               setBalances([]);
             } else {
-              console.error('Failed to load balances:', error);
+              logger.error("Failed to load balances", error);
               setBalances([]);
             }
           }
         },
       });
     } catch (error) {
-      console.error('Failed to connect wallet:', error);
+      logger.error("Failed to connect wallet", error);
       throw error;
     }
   }, [server, network, refreshNetworkStatus]);
@@ -148,7 +168,7 @@ export function WalletProvider({
 
       clearPersistedWalletState();
     } catch (error) {
-      console.error('Failed to disconnect wallet:', error);
+      logger.error("Failed to disconnect wallet", error);
     }
   }, [refreshNetworkStatus]);
 
@@ -159,72 +179,88 @@ export function WalletProvider({
       const account = await server.accounts().accountId(publicKey).call();
       setBalances(account.balances);
     } catch (error: unknown) {
-      if (error && typeof error === 'object' && 'response' in error && (error as { response?: { status?: number } }).response?.status === 404) {
-        console.log(`Account ${publicKey} not found on testnet. Fund it with XLM to activate it.`);
+      if (
+        error &&
+        typeof error === "object" &&
+        "response" in error &&
+        (error as { response?: { status?: number } }).response?.status === 404
+      ) {
+        logger.info(
+          `Account ${publicKey} not found on testnet. Fund it with XLM to activate it.`,
+        );
         setBalances([]);
       } else {
-        console.error('Failed to load balances:', error);
+        logger.error("Failed to load balances", error);
         setBalances([]);
       }
     }
   }, [publicKey, server]);
 
-  const sendPayment = useCallback(async (opts: PaymentOptions): Promise<Horizon.HorizonApi.SubmitTransactionResponse> => {
-    if (!publicKey || !connected) {
-      throw new Error('Wallet not connected');
-    }
-
-    try {
-      const account = await server.loadAccount(publicKey);
-      const asset = opts.asset === 'XLM' || !opts.asset
-        ? Asset.native()
-        : new Asset(opts.asset.code, opts.asset.issuer);
-
-      const txBuilder = new TransactionBuilder(account, {
-        fee: BASE_FEE,
-        networkPassphrase: network,
-      }).addOperation(
-        Operation.payment({
-          destination: opts.to,
-          asset,
-          amount: opts.amount,
-        })
-      );
-
-      if (opts.memo) {
-        txBuilder.addMemo(Memo.text(opts.memo));
+  const sendPayment = useCallback(
+    async (
+      opts: PaymentOptions,
+    ): Promise<Horizon.HorizonApi.SubmitTransactionResponse> => {
+      if (!publicKey || !connected) {
+        throw new Error("Wallet not connected");
       }
 
-      const transaction = txBuilder.setTimeout(30).build();
+      try {
+        const account = await server.loadAccount(publicKey);
+        const asset =
+          opts.asset === "XLM" || !opts.asset
+            ? Asset.native()
+            : new Asset(opts.asset.code, opts.asset.issuer);
 
-      let signedTxXdr: string;
-      if (opts.secret) {
-        const { Keypair } = await import('@stellar/stellar-sdk');
-        const keypair = Keypair.fromSecret(opts.secret);
-        transaction.sign(keypair);
-        signedTxXdr = transaction.toXDR();
-      } else {
-        const { signTransaction } = await import('../lib/stellar-wallet-kit');
-        signedTxXdr = await signTransaction({
-          unsignedTransaction: transaction.toXDR(),
-          address: publicKey,
-        });
+        const txBuilder = new TransactionBuilder(account, {
+          fee: BASE_FEE,
+          networkPassphrase: network,
+        }).addOperation(
+          Operation.payment({
+            destination: opts.to,
+            asset,
+            amount: opts.amount,
+          }),
+        );
+
+        if (opts.memo) {
+          txBuilder.addMemo(Memo.text(opts.memo));
+        }
+
+        const transaction = txBuilder.setTimeout(30).build();
+
+        let signedTxXdr: string;
+        if (opts.secret) {
+          const { Keypair } = await import("@stellar/stellar-sdk");
+          const keypair = Keypair.fromSecret(opts.secret);
+          transaction.sign(keypair);
+          signedTxXdr = transaction.toXDR();
+        } else {
+          const { signTransaction } = await import("../lib/stellar-wallet-kit");
+          signedTxXdr = await signTransaction({
+            unsignedTransaction: transaction.toXDR(),
+            address: publicKey,
+          });
+        }
+
+        const signedTransaction = TransactionBuilder.fromXDR(
+          signedTxXdr,
+          network,
+        );
+        const result = await server.submitTransaction(signedTransaction);
+
+        await refreshBalances();
+        return result;
+      } catch (error) {
+        logger.error("Payment failed", error);
+        throw error;
       }
-
-      const signedTransaction = TransactionBuilder.fromXDR(signedTxXdr, network);
-      const result = await server.submitTransaction(signedTransaction);
-
-      await refreshBalances();
-      return result;
-    } catch (error) {
-      console.error('Payment failed:', error);
-      throw error;
-    }
-  }, [publicKey, connected, server, network, refreshBalances]);
+    },
+    [publicKey, connected, server, network, refreshBalances],
+  );
 
   useEffect(() => {
     const autoReconnect = async () => {
-      if (typeof window === 'undefined') return;
+      if (typeof window === "undefined") return;
 
       const saved = readPersistedWalletState();
 
@@ -250,8 +286,16 @@ export function WalletProvider({
               const account = await server.accounts().accountId(address).call();
               setBalances(account.balances);
             } catch (error: unknown) {
-              if (error && typeof error === 'object' && 'response' in error && (error as { response?: { status?: number } }).response?.status === 404) {
-                console.log(`Account ${address} not found. Fund it to activate.`);
+              if (
+                error &&
+                typeof error === "object" &&
+                "response" in error &&
+                (error as { response?: { status?: number } }).response
+                  ?.status === 404
+              ) {
+                logger.info(
+                  `Account ${address} not found. Fund it to activate.`,
+                );
                 setBalances([]);
               } else {
                 setBalances([]);
@@ -259,7 +303,7 @@ export function WalletProvider({
             }
           }
         } catch {
-          console.log('Auto-reconnect failed');
+          logger.warn("Auto-reconnect failed");
           clearPersistedWalletState();
         }
       }
@@ -305,7 +349,7 @@ export function WalletProvider({
 export function useWallet(): WalletContextState {
   const context = useContext(WalletContext);
   if (context === undefined) {
-    throw new Error('useWallet must be used within a WalletProvider');
+    throw new Error("useWallet must be used within a WalletProvider");
   }
   return context;
 }
