@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
+import { clearOnboardingState, loadOnboardingState as getOnboardingState } from '@/lib/onboarding-state';
 
 interface OnboardingState {
   completed: boolean;
@@ -15,16 +16,13 @@ export default function OnboardingSettings() {
   const [isResetting, setIsResetting] = useState(false);
 
   useEffect(() => {
-    loadOnboardingState();
+    fetchOnboardingState();
   }, []);
 
-  const loadOnboardingState = () => {
+  const fetchOnboardingState = () => {
     try {
-      const savedState = localStorage.getItem('onboarding-state');
-      if (savedState) {
-        const state = JSON.parse(savedState);
-        setOnboardingState(state);
-      }
+      const state = getOnboardingState();
+      setOnboardingState(state);
     } catch (error) {
       console.error('Failed to load onboarding state:', error);
     }
@@ -39,7 +37,7 @@ export default function OnboardingSettings() {
     
     try {
       // Clear onboarding state
-      localStorage.removeItem('onboarding-state');
+      clearOnboardingState();
       localStorage.removeItem('user-strategy');
       localStorage.removeItem('first-deposit');
       
