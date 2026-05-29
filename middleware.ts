@@ -4,9 +4,10 @@ import {
   isProtectedPath,
   SESSION_COOKIE_NAME,
   SIGN_IN_PATH,
+  POST_SIGN_IN_PATH,
 } from "./src/lib/auth-constants";
 
-function isSessionCookieValid(rawCookie: string | undefined): boolean {
+export function isSessionCookieValid(rawCookie: string | undefined): boolean {
   if (!rawCookie) return false;
 
   try {
@@ -40,7 +41,7 @@ export function middleware(request: NextRequest) {
   }
 
   if (authenticated && isAuthOnlyPath(url.pathname)) {
-    url.pathname = "/dashboard";
+    url.pathname = POST_SIGN_IN_PATH;
     url.searchParams.delete("from");
     return NextResponse.redirect(url);
   }
@@ -56,9 +57,8 @@ export const config = {
     "/profile/:path*",
     "/settings",
     "/settings/:path*",
-    // Auth-only routes — redirect authenticated users to /dashboard
-    // /(auth)/signup and /(auth)/signin are route-group folders; Next.js
-    // strips the (auth) segment so they resolve to /signup and /signin.
+    "/onboarding",
+    "/onboarding/:path*",
     "/login",
     "/login/:path*",
     "/signup",

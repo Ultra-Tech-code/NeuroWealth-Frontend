@@ -53,9 +53,9 @@ export default function WalletConnectButton({ theme = 'light' }: WalletConnectBu
           }
         });
 
-        if (!modal.querySelector('.custom-stellar-message')) {
+        if (!modal.querySelector('.custom-neurowealth-message')) {
           const customMessage = document.createElement('div');
-          customMessage.className = 'custom-stellar-message';
+          customMessage.className = 'custom-neurowealth-message';
           customMessage.innerHTML = `
             <div style="
               padding: 16px;
@@ -67,7 +67,7 @@ export default function WalletConnectButton({ theme = 'light' }: WalletConnectBu
               line-height: 1.5;
               border: 1px solid rgba(156, 163, 175, 0.3);
             ">
-              ✨ The Stellar SDK has been integrated into this template. Use the reusable Connect Wallet button component in any project to connect to Freighter, Albedo, Lobstr, and other popular Stellar wallets.
+              🧠 Connect your Stellar wallet to access NeuroWealth's AI-powered investment strategies and portfolio management tools.
             </div>
           `;
           modal.appendChild(customMessage);
