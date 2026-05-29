@@ -3,11 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { useToast } from '@/components/notifications/ToastProvider';
-import { STORAGE_KEYS } from '@/lib/storage-keys';
-const ONBOARDING_STATE_STORAGE_KEY = STORAGE_KEYS.ONBOARDING_STATE;
-const ONBOARDING_STRATEGY_STORAGE_KEY = STORAGE_KEYS.ONBOARDING_USER_STRATEGY;
-const ONBOARDING_DEPOSIT_STORAGE_KEY = STORAGE_KEYS.ONBOARDING_FIRST_DEPOSIT;
+import { clearOnboardingState, loadOnboardingState as getOnboardingState } from '@/lib/onboarding-state';
 
 interface OnboardingState {
   completed: boolean;
@@ -21,16 +17,13 @@ export default function OnboardingSettings() {
   const { pushToast } = useToast();
 
   useEffect(() => {
-    loadOnboardingState();
+    fetchOnboardingState();
   }, []);
 
-  const loadOnboardingState = () => {
+  const fetchOnboardingState = () => {
     try {
-      const savedState = localStorage.getItem(ONBOARDING_STATE_STORAGE_KEY);
-      if (savedState) {
-        const state = JSON.parse(savedState);
-        setOnboardingState(state);
-      }
+      const state = getOnboardingState();
+      setOnboardingState(state);
     } catch (error) {
       console.error('Failed to load onboarding state:', error);
     }
@@ -45,9 +38,9 @@ export default function OnboardingSettings() {
     
     try {
       // Clear onboarding state
-      localStorage.removeItem(ONBOARDING_STATE_STORAGE_KEY);
-      localStorage.removeItem(ONBOARDING_STRATEGY_STORAGE_KEY);
-      localStorage.removeItem(ONBOARDING_DEPOSIT_STORAGE_KEY);
+      clearOnboardingState();
+      localStorage.removeItem('user-strategy');
+      localStorage.removeItem('first-deposit');
       
       // Reset state
       setOnboardingState(null);

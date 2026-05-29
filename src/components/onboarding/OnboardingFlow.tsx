@@ -7,8 +7,8 @@ import OnboardingStepper from './OnboardingStepper';
 import WalletConnectStep from './steps/WalletConnectStep';
 import StrategyOverviewStep from './steps/StrategyOverviewStep';
 import FirstDepositStep from './steps/FirstDepositStep';
-import { STORAGE_KEYS } from '@/lib/storage-keys';
-const ONBOARDING_STATE_STORAGE_KEY = STORAGE_KEYS.ONBOARDING_STATE;
+import { loadOnboardingState, saveOnboardingState } from '@/lib/onboarding-state';
+import { resolveOnboardingState } from './onboarding-utils';
 
 interface OnboardingStep {
   id: string;
@@ -58,32 +58,26 @@ export default function OnboardingFlow({
 
   // Load saved state from localStorage
   useEffect(() => {
-    const savedState = localStorage.getItem(ONBOARDING_STATE_STORAGE_KEY);
-    if (savedState) {
-      try {
-        const { completed, lastStep } = JSON.parse(savedState);
-        if (completed) {
-          setIsCompleted(true);
-        } else if (lastStep !== undefined) {
-          setCurrentStep(lastStep);
-        }
-      } catch (error) {
-        console.error('Failed to load onboarding state:', error);
-      }
+    const savedState = loadOnboardingState();
+    if (!savedState) {
+      return;
     }
-  }, []);
+
+    const { currentStep: recoveredStep, isCompleted } = resolveOnboardingState(savedState, initialStep);
+    if (isCompleted) {
+      setIsCompleted(true);
+    } else {
+      setCurrentStep(recoveredStep);
+    }
+  }, [initialStep]);
 
   // Save state to localStorage
   const saveState = (step: number, completed: boolean = false) => {
-    try {
-      localStorage.setItem(ONBOARDING_STATE_STORAGE_KEY, JSON.stringify({
-        lastStep: step,
-        completed,
-        timestamp: Date.now()
-      }));
-    } catch (error) {
-      console.error('Failed to save onboarding state:', error);
-    }
+    saveOnboardingState({
+      lastStep: step,
+      completed,
+      timestamp: Date.now()
+    });
   };
 
   const handleNext = () => {
