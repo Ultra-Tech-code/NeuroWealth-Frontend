@@ -27,7 +27,7 @@ const config: Config = {
         "primary": "#0EA5E9",
         "primary-hover": "#0284C7",
         // Text
-        "text-primary": "#F9FAFB",
+        "text-primary": "#F8FAFC",
         "text-secondary": "#9CA3AF",
         "text-muted": "#6B7280",
         // Status
@@ -38,7 +38,7 @@ const config: Config = {
       },
       fontFamily: {
         sans: ["Inter", "system-ui", "sans-serif"],
-        mono: ["JetBrains Mono", "monospace"],
+        mono: ["Roboto Mono", "JetBrains Mono", "monospace"],
       },
       fontWeight: {
         // Issue 29 spec: headings 600/700, body 400/500
