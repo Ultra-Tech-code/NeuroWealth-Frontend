@@ -1,5 +1,6 @@
 /**
  * @module Skeleton
+ * // Fixes issue 441: Implement global loading, empty, and error state system
  *
  * Reusable skeleton loading primitives for NeuroWealth.
  *

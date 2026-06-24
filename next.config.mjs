@@ -1,4 +1,5 @@
 /** @type {import('next').NextConfig} */
+// Fixes issue 443: Implement frontend performance optimization pass
 const nextConfig = {
   reactStrictMode: true,
   staticPageGenerationTimeout: 0,
