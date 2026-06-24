@@ -9,6 +9,13 @@ import { ToastProvider } from "@/components/notifications/ToastProvider";
 import { CookieConsentProvider } from "@/contexts/CookieConsentContext";
 import { CookieBanner, PrivacyModal } from "@/components/cookie";
 import { composeProviders } from "@/lib/composeProviders";
+import { useErrorTracking } from "@/hooks/useErrorTracking";
+
+/** Mounts global error tracking (window error + unhandledrejection → logger). */
+function ErrorTrackingMount() {
+  useErrorTracking();
+  return null;
+}
 
 function resolveStellarConfig() {
   const rawNetwork = (process.env.NEXT_PUBLIC_STELLAR_NETWORK || "testnet").toLowerCase();
@@ -39,6 +46,7 @@ export function ClientProviders({ children }: { children: ReactNode }) {
 
   return (
     <Providers>
+      <ErrorTrackingMount />
       {children}
       <CookieBanner />
       <PrivacyModal />
