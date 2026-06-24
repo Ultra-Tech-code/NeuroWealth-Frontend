@@ -58,6 +58,11 @@ src/
 TypeScript strict mode is enabled (`tsconfig.json` → `"strict": true`).
 Lint runs via `yarn lint` (ESLint + `eslint-config-next`).
 
+Environment variables
+---------------------
+See `docs/env.md` for the full variable reference, including the public/server-only split,
+Edge middleware constraints, and runtime validation notes.
+
 Auth syncing note
 -----------------
 The mock auth flow stores the session in `localStorage` using `SESSION_STORAGE_KEY` and mirrors it into a cookie named `SESSION_COOKIE_NAME`. This allows the browser UI and Next.js middleware to agree on authentication state in demo setups. See `src/lib/auth-constants.ts` for the canonical values.
