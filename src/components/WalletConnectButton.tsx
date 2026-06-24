@@ -52,6 +52,7 @@ export default function WalletConnectButton({
     connect,
     disconnect,
     walletName,
+    publicKey,
     networkStatus,
   } = useWallet();
   const { pushToast } = useToast();
@@ -88,9 +89,9 @@ export default function WalletConnectButton({
           }
         });
 
-        if (!modal.querySelector('.custom-neurowealth-message')) {
-          const customMessage = document.createElement('div');
-          customMessage.className = 'custom-neurowealth-message';
+        if (!modal.querySelector(".custom-neurowealth-message")) {
+          const customMessage = document.createElement("div");
+          customMessage.className = "custom-neurowealth-message";
           customMessage.innerHTML = `
             <div style="
               padding: 16px;
@@ -151,7 +152,10 @@ export default function WalletConnectButton({
 
   const getButtonText = () => {
     if (isLoading) return connected ? "Disconnecting..." : "Connecting...";
-    if (connected) return `Disconnect ${walletName}`;
+    if (connected && publicKey) {
+      const truncated = `${publicKey.slice(0, 6)}...${publicKey.slice(-6)}`;
+      return `${truncated} (${walletName})`;
+    }
     return "Connect Wallet";
   };
 
