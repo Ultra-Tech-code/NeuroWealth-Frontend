@@ -855,7 +855,7 @@ export function TransactionFlow() {
                         className={`${styles.button} ${styles.buttonPrimary}`}
                         onClick={handleConfirm}
                         type="button"
-                        data-qa="transaction-confirm-button"
+                        data-qa="transaction-submit-button"
                       >
                         {context.confirmActionLabel}
                       </button>

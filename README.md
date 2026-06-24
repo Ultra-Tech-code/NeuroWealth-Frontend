@@ -134,6 +134,9 @@ The mock auth flow stores the session in `localStorage` using `SESSION_STORAGE_K
 - Tests live next to logic under `src/` and run via `yarn test`.
 - For bundle-size checks, run `yarn analyze` locally and review the generated report before
   changing code that affects route or vendor bundles.
+- Use `data-qa` only for smoke-flow anchors, with kebab-case names that describe the flow and
+  action, for example `landing-primary-cta-button`, `wallet-connect-button`, and
+  `transaction-submit-button`.
 
 ## License
 
