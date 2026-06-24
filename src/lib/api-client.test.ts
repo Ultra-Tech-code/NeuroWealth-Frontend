@@ -120,7 +120,7 @@ test("apiRequest rejects payloads that are not the success/error envelope", asyn
 });
 
 test("apiRequest sets Content-Type and Accept headers automatically for JSON bodies", async () => {
-  let capturedHeaders: Headers | null = null;
+  let capturedHeaders!: Headers;
 
   globalThis.fetch = async (_url, init) => {
     capturedHeaders = new Headers(init?.headers);
@@ -132,8 +132,8 @@ test("apiRequest sets Content-Type and Accept headers automatically for JSON bod
 
   await apiRequest("/api/test", { method: "POST", body: { x: 1 } });
 
-  assert.equal(capturedHeaders?.get("Content-Type"), "application/json");
-  assert.equal(capturedHeaders?.get("Accept"), "application/json");
+  assert.equal(capturedHeaders.get("Content-Type"), "application/json");
+  assert.equal(capturedHeaders.get("Accept"), "application/json");
 });
 
 test("createServerApiClient returns null when NEUROWEALTH_API_BASE_URL is not set", () => {
@@ -147,7 +147,7 @@ test("createServerApiClient returns a callable client when base URL is set", asy
   process.env.NEUROWEALTH_API_AUTH_TOKEN = "test-token";
 
   let capturedUrl: string | URL | Request | undefined;
-  let capturedHeaders: Headers | null = null;
+  let capturedHeaders!: Headers;
 
   globalThis.fetch = async (url, init) => {
     capturedUrl = url as string;
@@ -165,5 +165,5 @@ test("createServerApiClient returns a callable client when base URL is set", asy
 
   assert.equal(result.ok, true);
   assert.ok(String(capturedUrl).includes("api.example.com"));
-  assert.equal(capturedHeaders?.get("Authorization"), "Bearer test-token");
+  assert.equal(capturedHeaders.get("Authorization"), "Bearer test-token");
 });

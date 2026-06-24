@@ -1,7 +1,7 @@
 "use client";
 
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from "recharts";
-import { BaseChart, ChartTooltip } from "./BaseChart";
+import { BaseChart, ChartTooltip, type ChartTooltipFormatter } from "./BaseChart";
 import { chartTheme, chartDimensions } from "@/lib/chart-theme";
 import type { ChartDatum } from "@/lib/mock-chart-data";
 
@@ -14,7 +14,7 @@ interface BarChartWrapperProps<T extends ChartDatum> {
   showLegend?: boolean;
   color?: string;
   barSize?: number;
-  formatter?: (value: any, name: string) => [string, string];
+  formatter?: ChartTooltipFormatter;
 }
 
 export function BarChartWrapper<T extends ChartDatum = ChartDatum>({

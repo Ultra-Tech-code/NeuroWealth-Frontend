@@ -110,6 +110,12 @@ const appRouteDefinitions: AppRouteDefinition[] = [
   },
   { href: "/dashboard/sandbox", label: "Sandbox", icon: SlidersHorizontal },
   {
+    href: "/dashboard/sandbox/ui-demo",
+    label: "UI Demo",
+    icon: Blocks,
+    devOnly: true,
+  },
+  {
     href: "/dashboard/settings",
     label: "Settings",
     icon: Settings,

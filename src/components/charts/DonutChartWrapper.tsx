@@ -1,7 +1,7 @@
 "use client";
 
 import { PieChart, Pie, Cell, Tooltip, Legend } from "recharts";
-import { BaseChart, ChartTooltip, usePrefersReducedMotion } from "./BaseChart";
+import { BaseChart, ChartTooltip, type ChartTooltipFormatter, usePrefersReducedMotion } from "./BaseChart";
 import { chartTheme, chartDimensions, getChartColor } from "@/lib/chart-theme";
 import type { AssetAllocationSlice } from "@/lib/mock-chart-data";
 
@@ -11,7 +11,7 @@ interface DonutChartWrapperProps {
   innerRadius?: number;
   outerRadius?: number;
   showLegend?: boolean;
-  formatter?: (value: any, name: string) => [string, string];
+  formatter?: ChartTooltipFormatter;
 }
 
 export function DonutChartWrapper({
