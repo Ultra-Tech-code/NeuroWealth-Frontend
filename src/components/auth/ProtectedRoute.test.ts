@@ -150,6 +150,10 @@ test("ProtectedRoute — isProtectedPath: /signup is public", () => {
   assert.equal(isProtectedPath("/signup"), false);
 });
 
+test("ProtectedRoute — isProtectedPath: /signin is public", () => {
+  assert.equal(isProtectedPath("/signin"), false);
+});
+
 test("ProtectedRoute — isProtectedPath: / (root) is public", () => {
   assert.equal(isProtectedPath("/"), false);
 });
@@ -168,6 +172,10 @@ test("ProtectedRoute — isAuthOnlyPath: /signup redirects authenticated users",
   assert.equal(isAuthOnlyPath("/signup"), true);
 });
 
+test("ProtectedRoute — isAuthOnlyPath: /signin redirects authenticated users", () => {
+  assert.equal(isAuthOnlyPath("/signin"), true);
+});
+
 test("ProtectedRoute — isAuthOnlyPath: /dashboard is accessible when authenticated", () => {
   assert.equal(isAuthOnlyPath("/dashboard"), false);
 });
@@ -178,4 +186,53 @@ test("ProtectedRoute — isAuthOnlyPath: /profile is accessible when authenticat
 
 test("ProtectedRoute — isAuthOnlyPath: / (root) is not auth-only", () => {
   assert.equal(isAuthOnlyPath("/"), false);
+});
+
+// ── Additional redirect URL edge cases ────────────────────────────────────────
+
+test("ProtectedRoute — unauthenticated: 'from' handles paths with query strings", () => {
+  const original = "/dashboard?tab=settings";
+  const url = buildRedirectUrl(SIGN_IN_PATH, original);
+  const fromParam = new URLSearchParams(url.split("?")[1]).get("from");
+  assert.equal(fromParam, original);
+});
+
+test("ProtectedRoute — unauthenticated: 'from' preserves hash fragments", () => {
+  const original = "/dashboard/settings#security";
+  const url = buildRedirectUrl(SIGN_IN_PATH, original);
+  const fromParam = new URLSearchParams(url.split("?")[1]).get("from");
+  assert.equal(fromParam, original);
+});
+
+test("ProtectedRoute — unauthenticated: 'from' handles root path", () => {
+  const url = buildRedirectUrl(SIGN_IN_PATH, "/");
+  const fromParam = new URLSearchParams(url.split("?")[1]).get("from");
+  assert.equal(fromParam, "/");
+});
+
+// ── SIGN_IN_PATH default value ────────────────────────────────────────────────
+
+test("ProtectedRoute — default redirectTo is /login", () => {
+  assert.equal(SIGN_IN_PATH, "/login");
+});
+
+// ── Guard outcomes are mutually exclusive ─────────────────────────────────────
+
+test("ProtectedRoute — guard: all three outcomes are distinct", () => {
+  const outcomes = [
+    resolveGuard(true, null),
+    resolveGuard(false, null),
+    resolveGuard(false, AUTHED_USER),
+  ];
+  assert.equal(new Set(outcomes).size, 3);
+});
+
+// ── isProtectedPath — /onboarding ─────────────────────────────────────────────
+
+test("ProtectedRoute — isProtectedPath: /onboarding requires auth", () => {
+  assert.equal(isProtectedPath("/onboarding"), true);
+});
+
+test("ProtectedRoute — isProtectedPath: /onboarding/step/1 nested requires auth", () => {
+  assert.equal(isProtectedPath("/onboarding/step/1"), true);
 });

@@ -3,10 +3,8 @@
 import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { STORAGE_KEYS } from '@/lib/storage-keys';
-const ONBOARDING_STATE_STORAGE_KEY = STORAGE_KEYS.ONBOARDING_STATE;
-const ONBOARDING_STRATEGY_STORAGE_KEY = STORAGE_KEYS.ONBOARDING_USER_STRATEGY;
-const ONBOARDING_DEPOSIT_STORAGE_KEY = STORAGE_KEYS.ONBOARDING_FIRST_DEPOSIT;
+import { useToast } from '@/components/notifications/ToastProvider';
+import { clearOnboardingState, loadOnboardingState as getOnboardingState } from '@/lib/onboarding-state';
 
 interface OnboardingState {
   completed: boolean;
@@ -17,18 +15,16 @@ interface OnboardingState {
 export default function OnboardingSettings() {
   const [onboardingState, setOnboardingState] = useState<OnboardingState | null>(null);
   const [isResetting, setIsResetting] = useState(false);
+  const { pushToast } = useToast();
 
   useEffect(() => {
-    loadOnboardingState();
+    fetchOnboardingState();
   }, []);
 
-  const loadOnboardingState = () => {
+  const fetchOnboardingState = () => {
     try {
-      const savedState = localStorage.getItem(ONBOARDING_STATE_STORAGE_KEY);
-      if (savedState) {
-        const state = JSON.parse(savedState);
-        setOnboardingState(state);
-      }
+      const state = getOnboardingState();
+      setOnboardingState(state);
     } catch (error) {
       console.error('Failed to load onboarding state:', error);
     }
@@ -43,9 +39,9 @@ export default function OnboardingSettings() {
     
     try {
       // Clear onboarding state
-      localStorage.removeItem(ONBOARDING_STATE_STORAGE_KEY);
-      localStorage.removeItem(ONBOARDING_STRATEGY_STORAGE_KEY);
-      localStorage.removeItem(ONBOARDING_DEPOSIT_STORAGE_KEY);
+      clearOnboardingState();
+      localStorage.removeItem('user-strategy');
+      localStorage.removeItem('first-deposit');
       
       // Reset state
       setOnboardingState(null);
@@ -57,7 +53,11 @@ export default function OnboardingSettings() {
       globalThis.location.href = '/onboarding';
     } catch (error) {
       console.error('Failed to reset onboarding:', error);
-      alert('Failed to reset onboarding. Please try again.');
+      pushToast({
+        title: 'Failed to reset onboarding',
+        description: 'Please try again.',
+        variant: 'error',
+      });
     } finally {
       setIsResetting(false);
     }

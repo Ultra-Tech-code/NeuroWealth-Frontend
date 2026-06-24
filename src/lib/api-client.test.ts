@@ -1,12 +1,14 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { ApiRequestError, apiRequest } from "@/lib/api-client";
+import { ApiRequestError, apiRequest, createServerApiClient } from "@/lib/api-client";
 
 const originalFetch = globalThis.fetch;
+const originalEnv = { ...process.env };
 
 test.afterEach(() => {
   globalThis.fetch = originalFetch;
+  process.env = { ...originalEnv };
 });
 
 test("apiRequest returns typed data from success envelope", async () => {
@@ -82,4 +84,86 @@ test("apiRequest rejects invalid JSON payloads", async () => {
       return true;
     },
   );
+});
+
+test("apiRequest maps network failures to NETWORK_ERROR", async () => {
+  globalThis.fetch = async () => {
+    throw new TypeError("Failed to fetch");
+  };
+
+  await assert.rejects(
+    () => apiRequest("/api/test"),
+    (error: unknown) => {
+      assert.ok(error instanceof ApiRequestError);
+      assert.equal(error.code, "NETWORK_ERROR");
+      assert.equal(error.status, 503);
+      return true;
+    },
+  );
+});
+
+test("apiRequest rejects payloads that are not the success/error envelope", async () => {
+  globalThis.fetch = async () =>
+    new Response(JSON.stringify({ unexpected: true }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
+
+  await assert.rejects(
+    () => apiRequest("/api/test"),
+    (error: unknown) => {
+      assert.ok(error instanceof ApiRequestError);
+      assert.equal(error.code, "INVALID_ENVELOPE");
+      return true;
+    },
+  );
+});
+
+test("apiRequest sets Content-Type and Accept headers automatically for JSON bodies", async () => {
+  let capturedHeaders: Headers | null = null;
+
+  globalThis.fetch = async (_url, init) => {
+    capturedHeaders = new Headers(init?.headers);
+    return new Response(JSON.stringify({ success: true, data: null }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
+  };
+
+  await apiRequest("/api/test", { method: "POST", body: { x: 1 } });
+
+  assert.equal(capturedHeaders?.get("Content-Type"), "application/json");
+  assert.equal(capturedHeaders?.get("Accept"), "application/json");
+});
+
+test("createServerApiClient returns null when NEUROWEALTH_API_BASE_URL is not set", () => {
+  delete process.env.NEUROWEALTH_API_BASE_URL;
+  const client = createServerApiClient();
+  assert.equal(client, null);
+});
+
+test("createServerApiClient returns a callable client when base URL is set", async () => {
+  process.env.NEUROWEALTH_API_BASE_URL = "https://api.example.com";
+  process.env.NEUROWEALTH_API_AUTH_TOKEN = "test-token";
+
+  let capturedUrl: string | URL | Request | undefined;
+  let capturedHeaders: Headers | null = null;
+
+  globalThis.fetch = async (url, init) => {
+    capturedUrl = url as string;
+    capturedHeaders = new Headers(init?.headers);
+    return new Response(JSON.stringify({ success: true, data: { ok: true } }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
+  };
+
+  const client = createServerApiClient();
+  assert.ok(client !== null);
+
+  const result = await client<{ ok: boolean }>("/health");
+
+  assert.equal(result.ok, true);
+  assert.ok(String(capturedUrl).includes("api.example.com"));
+  assert.equal(capturedHeaders?.get("Authorization"), "Bearer test-token");
 });

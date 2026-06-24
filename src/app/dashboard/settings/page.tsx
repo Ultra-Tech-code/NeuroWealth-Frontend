@@ -1,6 +1,8 @@
 import { Suspense } from "react";
-import { Bell, Globe, Shield, Wallet } from "lucide-react";
+import Link from "next/link";
+import { Bell, ChevronRight, Globe, Monitor, Palette, Shield, UserRound, Wallet } from "lucide-react";
 import SettingsLoading from "./loading";
+import { ThemeSettings } from "@/components/settings/ThemeSettings";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Settings — NeuroWealth" };
@@ -58,6 +60,18 @@ function ComingSoonBadge() {
   );
 }
 
+function LinkAction({ href, label }: { href: string; label: string }) {
+  return (
+    <Link
+      href={href}
+      className="inline-flex items-center gap-1.5 text-xs font-medium text-sky-400 hover:text-sky-300 transition-colors"
+    >
+      {label}
+      <ChevronRight className="w-3.5 h-3.5" aria-hidden="true" />
+    </Link>
+  );
+}
+
 function SettingsContent() {
   return (
     <div className="max-w-2xl space-y-6 animate-fade-in">
@@ -67,6 +81,27 @@ function SettingsContent() {
           Manage your account preferences and connected wallet.
         </p>
       </div>
+
+      <SettingsSection title="Appearance" icon={Palette}>
+        <SettingsRow
+          label="Theme"
+          description="Choose between light, dark, or system preference."
+          action={<ThemeSettings />}
+        />
+      </SettingsSection>
+
+      <SettingsSection title="Profile" icon={UserRound}>
+        <SettingsRow
+          label="Display Name & Preferences"
+          description="Edit your display name, locale, timezone, and currency format."
+          action={<LinkAction href="/profile" label="Edit profile" />}
+        />
+        <SettingsRow
+          label="Language & Region"
+          description="Change your locale and regional display settings."
+          action={<LinkAction href="/profile" label="Open" />}
+        />
+      </SettingsSection>
 
       <SettingsSection title="Wallet" icon={Wallet}>
         <SettingsRow
@@ -111,7 +146,7 @@ function SettingsContent() {
         <SettingsRow
           label="Currency Display"
           description="Choose your preferred display currency (USD, EUR, GBP)."
-          action={<ComingSoonBadge />}
+          action={<LinkAction href="/profile" label="Open profile" />}
         />
       </SettingsSection>
     </div>

@@ -9,6 +9,7 @@ import React, {
 } from "react";
 import type { AuthSession } from "@/lib/auth-adapter";
 import { getAuthAdapter } from "@/lib/auth-provider-factory";
+import { analytics } from "@/lib/analytics";
 
 import { useRouter } from "next/navigation";
 import {
@@ -86,6 +87,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const session = await authAdapter.signIn(email, password);
       setUser(session.user);
       setSessionCookie(session);
+      analytics.track("auth_sign_in", { userId: session.user.id });
+    } catch (err) {
+      analytics.track("auth_sign_in_failed");
+      throw err;
     } finally {
       setLoading(false);
     }
@@ -97,12 +102,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const session = await authAdapter.signUp(email, name, password);
       setUser(session.user);
       setSessionCookie(session);
+      analytics.track("auth_sign_up", { userId: session.user.id });
+    } catch (err) {
+      analytics.track("auth_sign_up_failed");
+      throw err;
     } finally {
       setLoading(false);
     }
   };
 
   const signOut = () => {
+    analytics.track("auth_sign_out", { userId: user?.id });
     authAdapter.signOut();
     clearSessionCookie();
     setUser(null);

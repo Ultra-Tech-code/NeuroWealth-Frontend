@@ -19,6 +19,7 @@ import {
 import { ProfileFormSkeleton } from "@/components/ui/Skeleton";
 
 import { ProfileData, DEFAULT_PROFILE, mockProfileService } from "@/lib/mock-services";
+import { LOCALE_OPTIONS as LOCALES } from "@/lib/locale-options";
 
 interface ValidationErrors {
   displayName?: string;
@@ -28,19 +29,6 @@ interface ValidationErrors {
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
-
-const LOCALES = [
-  { value: "en-US", label: "English (United States)" },
-  { value: "en-GB", label: "English (United Kingdom)" },
-  { value: "en-NG", label: "English (Nigeria)" },
-  { value: "fr-FR", label: "French (France)" },
-  { value: "de-DE", label: "German (Germany)" },
-  { value: "es-ES", label: "Spanish (Spain)" },
-  { value: "pt-BR", label: "Portuguese (Brazil)" },
-  { value: "ja-JP", label: "Japanese (Japan)" },
-  { value: "zh-CN", label: "Chinese (Simplified)" },
-  { value: "ar-SA", label: "Arabic (Saudi Arabia)" },
-];
 
 const TIMEZONES = [
   { value: "UTC", label: "UTC — Coordinated Universal Time" },
@@ -283,7 +271,7 @@ export default function ProfilePage() {
 
         {/* ── Breadcrumb ── */}
         <nav className="profile-breadcrumb" aria-label="breadcrumb">
-          <span>Dashboard</span>
+          <a href="/dashboard/settings" className="breadcrumb-link">Settings</a>
           <ChevronRight size={13} />
           <span className="active">Profile</span>
         </nav>
@@ -538,6 +526,12 @@ export default function ProfilePage() {
         .profile-breadcrumb .active {
           color: #38bdf8;
         }
+        .breadcrumb-link {
+          color: #475569;
+          text-decoration: none;
+          transition: color 0.15s;
+        }
+        .breadcrumb-link:hover { color: #94a3b8; }
 
         /* ── Banners ── */
         .banner {
