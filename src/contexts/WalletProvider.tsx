@@ -75,6 +75,19 @@ interface WalletProviderProps {
 }
 
 const WalletContext = createContext<WalletContextState | undefined>(undefined);
+
+const WalletConfigContext = createContext<WalletConfigContextState | undefined>(undefined);
+
+/**
+ * Stellar network configuration.
+ * Uses NEXT_PUBLIC_STELLAR_NETWORK and NEXT_PUBLIC_STELLAR_HORIZON_URL env vars.
+ * Defaults to testnet. Mainnet is out of scope for the current phase.
+ */
+export function WalletProvider({
+  children,
+  horizonUrl = process.env.NEXT_PUBLIC_STELLAR_HORIZON_URL || 'https://horizon-testnet.stellar.org',
+  network = (process.env.NEXT_PUBLIC_STELLAR_NETWORK === 'mainnet' ? Networks.PUBLIC : Networks.TESTNET)
+
 const WalletConfigContext = createContext<WalletConfigContextState | undefined>(
   undefined,
 );
@@ -82,6 +95,7 @@ export function WalletProvider({
   children,
   horizonUrl = "https://horizon-testnet.stellar.org",
   network = Networks.TESTNET,
+
 }: WalletProviderProps) {
   const [connected, setConnected] = useState(false);
   const [isRestoring, setIsRestoring] = useState(true);

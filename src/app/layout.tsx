@@ -8,7 +8,14 @@ import { CommandPalette } from "@/components/CommandPalette";
 import { MAIN_CONTENT_LANDMARK_ID } from "@/lib/app-landmarks";
 import { THEME_STORAGE_KEY } from "@/lib/theme-persistence";
 
-/** Inline boot: must mirror ThemeProvider resolution (see theme-persistence.ts). */
+/**
+ * Theme boot script: runs before page paint to prevent theme flash.
+ * Uses strategy="beforeInteractive" to block rendering until script runs.
+ * See docs/third-party-scripts.md for guidance on adding more scripts.
+ * Any analytics/wallet SDKs should use strategy="afterInteractive" or "lazyOnload".
+ *
+ * Must mirror ThemeProvider resolution (see theme-persistence.ts).
+ */
 const themeHtmlBootScript = `(function(){try{var k=${JSON.stringify(
   THEME_STORAGE_KEY,
 )};var r=document.documentElement;var v=localStorage.getItem(k);var m=window.matchMedia("(prefers-color-scheme: dark)");var x="dark";if(v==="light"||v==="dark"){x=v;}else{x=m.matches?"dark":"light";}r.classList.remove("light","dark");r.classList.add(x);}catch(e){}})();`;
