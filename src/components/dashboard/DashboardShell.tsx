@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect } from "react";
+import { usePathname } from "next/navigation";
 import { DASHBOARD_ROUTE_TITLE_ID, MAIN_CONTENT_LANDMARK_ID } from "@/lib/app-landmarks";
 import Sidebar from "./Sidebar";
 import TopHeader from "./TopHeader";
@@ -38,6 +40,16 @@ interface DashboardShellProps {
  *   └────────────────────────┘
  */
 export default function DashboardShell({ children }: DashboardShellProps) {
+  const pathname = usePathname();
+
+  useEffect(() => {
+    const main = document.getElementById(MAIN_CONTENT_LANDMARK_ID);
+    if (main) {
+      main.setAttribute("tabindex", "-1");
+      main.focus({ preventScroll: true });
+    }
+  }, [pathname]);
+
   return (
     <>
       {/* Sidebar: hidden on mobile, icon-rail on tablet, full on desktop */}

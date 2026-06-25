@@ -72,15 +72,14 @@ export default function Sidebar() {
         className="flex-1 px-1.5 py-4 space-y-1 overflow-y-auto overflow-x-hidden"
         aria-label="Sidebar navigation"
       >
-        <p
+        <h2
           className={cn(
             "px-3 mb-2 text-xs font-semibold text-text-muted uppercase tracking-wider whitespace-nowrap transition-opacity duration-150",
             tabletExpanded ? "opacity-100" : "opacity-0 lg:opacity-100",
           )}
-          aria-hidden={!tabletExpanded ? "true" : undefined}
         >
           Menu
-        </p>
+        </h2>
 
         {dashboardNavigation.map(({ href, label, icon: Icon, exact }) => {
           const active = isActive(href, exact);
@@ -114,6 +113,7 @@ export default function Sidebar() {
                     ? "opacity-100"
                     : "opacity-0 w-0 lg:opacity-100 lg:w-auto",
                 )}
+                aria-hidden={!tabletExpanded || undefined}
               >
                 {label}
               </span>

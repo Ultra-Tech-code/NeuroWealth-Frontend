@@ -120,3 +120,22 @@ export function ariaSortValue(
   if (!isActive || !direction) return "none";
   return direction === "asc" ? "ascending" : "descending";
 }
+
+/**
+ * Get the total number of pages for a dataset.
+ * Returns 0 when pageSize is 0 or negative (show all mode).
+ */
+export function getTotalPages(totalItems: number, pageSize: number): number {
+  if (pageSize <= 0) return 0;
+  return Math.max(1, Math.ceil(totalItems / pageSize));
+}
+
+/**
+ * Return a slice of rows for the given page.
+ * Returns all rows when pageSize is 0 or negative.
+ */
+export function getPaginatedSlice<T>(rows: T[], page: number, pageSize: number): T[] {
+  if (pageSize <= 0) return rows;
+  const start = (page - 1) * pageSize;
+  return rows.slice(start, start + pageSize);
+}

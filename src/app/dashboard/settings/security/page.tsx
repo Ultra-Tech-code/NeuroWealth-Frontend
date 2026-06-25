@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Lock, Shield, AlertCircle, CheckCircle2, Save, X } from "lucide-react";
+import { useFocusTrap } from "@/hooks/useFocusTrap";
 import { Button } from "@/components/ui/Button";
 
 export const dynamic = "force-dynamic";
@@ -30,6 +31,8 @@ export default function SecurityPage() {
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [newPassword, setNewPassword] = useState("");
   const [pageLoading, setPageLoading] = useState(true);
+  const passwordModalRef = useRef<HTMLDivElement>(null);
+  useFocusTrap(passwordModalRef, showPasswordModal);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -267,7 +270,7 @@ export default function SecurityPage() {
       {/* Password Change Modal */}
       {showPasswordModal && (
         <div className="modal-overlay" onClick={() => setShowPasswordModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+          <div ref={passwordModalRef} className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h3 className="modal-title">Change Password</h3>
               <button

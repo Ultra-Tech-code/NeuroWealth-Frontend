@@ -75,6 +75,14 @@ function validateEnv(): EnvConfig {
   }
 
   if (process.env.NODE_ENV === "development") {
+    if (!process.env.NEXT_PUBLIC_ENABLE_DASHBOARD_SANDBOX) {
+      console.warn(
+        "[env] NEXT_PUBLIC_ENABLE_DASHBOARD_SANDBOX not set. " +
+        "The dashboard sandbox (/dashboard/sandbox) is disabled in production. " +
+        "Set it to \"true\" to enable it.",
+      );
+    }
+
     if (!neuroWealthApiBaseUrl) {
       console.warn(
         "[env] NEUROWEALTH_API_BASE_URL not set. Using demo data for portfolio and transactions.",

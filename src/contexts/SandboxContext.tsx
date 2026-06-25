@@ -44,7 +44,9 @@ interface SandboxProviderProps {
 export function SandboxProvider({ children }: SandboxProviderProps) {
   const [scenarios, setScenarios] = useState<ScenarioState>(defaultScenarios);
   const [isClient, setIsClient] = useState(false);
-  const isSandboxMode = process.env.NODE_ENV === "development";
+  const isSandboxMode =
+    process.env.NODE_ENV === "development" ||
+    process.env.NEXT_PUBLIC_ENABLE_DASHBOARD_SANDBOX === "true";
 
   useEffect(() => {
     setIsClient(true);

@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, Search, X } from "lucide-react";
+import { AlertCircle, Loader2, Search, SearchX, X } from "lucide-react";
 import {
   GroupedSearchResults,
   SearchGroup,
@@ -10,7 +10,8 @@ import {
   hasAnySearchResults,
 } from "@/lib/mock-search-index";
 import { useOnClickOutside } from "@/hooks/useOnClickOutside";
-import { getSearchDataProvider } from "@/lib/search-service";
+import { useDebounce } from "@/hooks/useDebounce";
+import { getSearchDataProvider, SEARCH_DEBOUNCE_MS } from "@/lib/search-service";
 
 interface GlobalSearchProps {
   placeholder?: string;
@@ -31,6 +32,19 @@ function flattenResults(results: GroupedSearchResults): SearchResultItem[] {
   return GROUP_ORDER.flatMap((group) => results[group]);
 }
 
+export function computeNextIndex(
+  current: number,
+  direction: 1 | -1,
+  total: number,
+): number {
+  if (total === 0) return -1;
+  if (current < 0 || current >= total) return 0;
+  const next = current + direction;
+  if (next < 0) return total - 1;
+  if (next >= total) return 0;
+  return next;
+}
+
 export function GlobalSearch({
   placeholder = "Search pages, actions, or records",
   onRequestClose,
@@ -42,11 +56,13 @@ export function GlobalSearch({
 
   const [isOpen, setIsOpen] = useState(false);
   const [query, setQuery] = useState("");
-  const [debouncedQuery, setDebouncedQuery] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [results, setResults] = useState<GroupedSearchResults>(EMPTY_RESULTS);
   const [activeIndex, setActiveIndex] = useState(-1);
+  const [retryKey, setRetryKey] = useState(0);
+
+  const debouncedQuery = useDebounce(query.trim(), SEARCH_DEBOUNCE_MS);
 
   const rootRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -68,13 +84,6 @@ export function GlobalSearch({
     }, 25);
     return () => window.clearTimeout(timer);
   }, [autoFocus]);
-
-  useEffect(() => {
-    const timer = window.setTimeout(() => {
-      setDebouncedQuery(query.trim());
-    }, 300);
-    return () => window.clearTimeout(timer);
-  }, [query]);
 
   useEffect(() => {
     if (!debouncedQuery) {
@@ -115,7 +124,7 @@ export function GlobalSearch({
       // A newer query (or unmount) supersedes this run; ignore its result.
       requestIdRef.current += 1;
     };
-  }, [debouncedQuery]);
+  }, [debouncedQuery, retryKey]);
 
   const flatResults = useMemo(() => flattenResults(results), [results]);
 
@@ -152,16 +161,17 @@ export function GlobalSearch({
     onRequestClose?.();
   };
 
+  const handleRetry = useCallback(() => {
+    setErrorMessage(null);
+    setRetryKey((k) => k + 1);
+  }, []);
+
   const moveActiveIndex = (direction: 1 | -1) => {
     if (flatResults.length === 0) return;
 
-    setActiveIndex((current) => {
-      if (current < 0) return 0;
-      const next = current + direction;
-      if (next < 0) return flatResults.length - 1;
-      if (next >= flatResults.length) return 0;
-      return next;
-    });
+    setActiveIndex((current) =>
+      computeNextIndex(current, direction, flatResults.length),
+    );
   };
 
   return (
@@ -233,8 +243,19 @@ export function GlobalSearch({
         )}
       </div>
 
-      <div className="sr-only" aria-live="polite">
-        {activeItem ? `${activeItem.group} result selected: ${activeItem.title}` : ""}
+      <div className="sr-only" aria-live="polite" aria-atomic="true">
+        {activeItem
+          ? `${activeItem.group} result selected: ${activeItem.title}`
+          : ""}
+      </div>
+      <div className="sr-only" aria-live="polite" aria-atomic="true">
+        {!isLoading && errorMessage
+          ? `Search error: ${errorMessage}`
+          : !isLoading && hasCommittedQuery && !hasResults
+            ? `No results found for ${debouncedQuery}`
+            : !isLoading && hasResults
+              ? `${flatResults.length} search result${flatResults.length !== 1 ? "s" : ""} available. Use arrow keys to navigate.`
+              : ""}
       </div>
 
       {shouldShowPanel && (
@@ -251,17 +272,41 @@ export function GlobalSearch({
           )}
 
           {!isLoading && errorMessage && (
-            <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-3 text-sm text-red-100">
-              <p className="font-medium">Search unavailable</p>
-              <p className="mt-1 text-red-200/90">{errorMessage}</p>
-              <p className="mt-2 text-red-200/80">Try a different query or retry in a moment.</p>
+            <div
+              className="rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-4 text-sm text-red-100"
+              role="alert"
+            >
+              <div className="flex items-start gap-2">
+                <AlertCircle size={16} className="mt-0.5 shrink-0 text-red-300" aria-hidden="true" />
+                <div className="min-w-0">
+                  <p className="font-medium">Search unavailable</p>
+                  <p className="mt-1 text-red-200/90">{errorMessage}</p>
+                </div>
+              </div>
+              <div className="mt-3 flex gap-2">
+                <button
+                  type="button"
+                  onClick={handleRetry}
+                  className="rounded-lg border border-red-500/40 bg-red-500/20 px-3 py-1.5 text-xs font-medium text-red-100 transition hover:bg-red-500/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400/50"
+                >
+                  Retry
+                </button>
+                <span className="text-xs text-red-200/70 self-center">
+                  Or try a different query.
+                </span>
+              </div>
             </div>
           )}
 
           {!isLoading && !errorMessage && hasCommittedQuery && !hasResults && (
-            <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-3 text-sm text-slate-300">
-              <p className="font-medium text-slate-100">No matches found</p>
-              <p className="mt-1">Try searching by route name, action verb, or a record ID like TX-7F1C.</p>
+            <div className="rounded-xl border border-dashed border-white/10 bg-white/[0.03] px-4 py-6 text-center text-sm text-slate-400">
+              <SearchX size={28} className="mx-auto text-slate-500" aria-hidden="true" />
+              <p className="mt-2 font-medium text-slate-300">
+                No matches for &ldquo;{debouncedQuery}&rdquo;
+              </p>
+              <p className="mt-1 text-slate-500">
+                Try a different route name, action verb, or record ID.
+              </p>
             </div>
           )}
 
