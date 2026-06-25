@@ -12,6 +12,8 @@ import {
   ArrowDown,
   ArrowUp,
   ChevronsUpDown,
+  ChevronLeft,
+  ChevronRight,
   Columns3,
   Search,
   X,
@@ -24,6 +26,8 @@ import {
   cycleSortDirection,
   distinctValues,
   filterRows,
+  getPaginatedSlice,
+  getTotalPages,
   type SortDirection,
   sortRows,
 } from "./dataTable.utils";
@@ -73,6 +77,8 @@ export interface DataTableProps<T> {
   /** Optional row click handler (also makes rows keyboard-activatable). */
   onRowClick?: (row: T) => void;
   className?: string;
+  /** Rows per page for client-side pagination. 0 or undefined shows all rows. */
+  pageSize?: number;
 }
 
 const alignText = {
@@ -116,6 +122,7 @@ export function DataTable<T extends object>({
     () => new Set(columns.filter((c) => c.defaultHidden).map((c) => c.key)),
   );
   const [menuOpen, setMenuOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const menuRef = useRef<HTMLDivElement>(null);
   const menuId = useId();
@@ -163,6 +170,22 @@ export function DataTable<T extends object>({
       ? sortRows(filtered, activeColumn.accessor, sort.direction)
       : filtered;
   }, [data, columns, query, columnFilters, accessorsByKey, sort, searchable]);
+
+  const totalPages = useMemo(
+    () => getTotalPages(rows.length, pageSize ?? 0),
+    [rows, pageSize],
+  );
+
+  const pagedRows = useMemo(
+    () => getPaginatedSlice(rows, currentPage, pageSize ?? 0),
+    [rows, currentPage, pageSize],
+  );
+
+  const safePage = Math.min(currentPage, totalPages || 1);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [data, query, columnFilters]);
 
   const toggleSort = (key: string) =>
     setSort((prev) => {
@@ -384,7 +407,7 @@ export function DataTable<T extends object>({
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-white/5">
-            {rows.length === 0 ? (
+            {pagedRows.length === 0 ? (
               <tr>
                 <td
                   colSpan={visibleColumns.length}
@@ -394,7 +417,7 @@ export function DataTable<T extends object>({
                 </td>
               </tr>
             ) : (
-              rows.map((row) => (
+              pagedRows.map((row) => (
                 <tr
                   key={rowKey(row)}
                   onClick={onRowClick ? () => onRowClick(row) : undefined}
@@ -425,12 +448,12 @@ export function DataTable<T extends object>({
 
       {/* ── Mobile card layout ───────────────────────────────────── */}
       <ul className="flex flex-col gap-2.5 md:hidden" aria-label={caption ?? "Table rows"}>
-        {rows.length === 0 ? (
+        {pagedRows.length === 0 ? (
           <li className="rounded-lg border border-dashed border-slate-200 py-10 text-center text-sm text-slate-400 dark:border-white/10">
             {emptyMessage}
           </li>
         ) : (
-          rows.map((row) => (
+          pagedRows.map((row) => (
             <li
               key={rowKey(row)}
               onClick={onRowClick ? () => onRowClick(row) : undefined}
@@ -459,14 +482,75 @@ export function DataTable<T extends object>({
         )}
       </ul>
 
+      {/* Pagination controls */}
+      {pageSize && pageSize > 0 && totalPages > 1 && (
+        <div className="flex items-center justify-between gap-4 px-1">
+          <p className="text-xs text-slate-400">
+            {(safePage - 1) * pageSize + 1}–{Math.min(safePage * pageSize, rows.length)}
+            {" of "}
+            <span className="text-slate-300">{rows.length}</span>
+          </p>
+          <div className="flex items-center gap-1" role="navigation" aria-label="Pagination">
+            <button
+              type="button"
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              disabled={safePage <= 1}
+              aria-label="Previous page"
+              className={cn(
+                "inline-flex items-center justify-center h-8 w-8 rounded-lg border text-slate-400 hover:text-slate-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors",
+                "border-slate-200 bg-white dark:border-white/10 dark:bg-slate-900 dark:hover:text-white dark:hover:border-white/20",
+                FOCUS_RING,
+              )}
+            >
+              <ChevronLeft size={14} />
+            </button>
+
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((n) => (
+              <button
+                key={n}
+                type="button"
+                onClick={() => setCurrentPage(n)}
+                aria-label={`Page ${n}`}
+                aria-current={n === safePage ? "page" : undefined}
+                className={cn(
+                  "inline-flex items-center justify-center h-8 w-8 rounded-lg text-sm transition-colors",
+                  n === safePage
+                    ? "bg-sky-500 text-white font-semibold"
+                    : "border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-white/10 dark:bg-slate-900 dark:text-slate-400 dark:hover:text-white dark:hover:border-white/20",
+                  FOCUS_RING,
+                )}
+              >
+                {n}
+              </button>
+            ))}
+
+            <button
+              type="button"
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              disabled={safePage >= totalPages}
+              aria-label="Next page"
+              className={cn(
+                "inline-flex items-center justify-center h-8 w-8 rounded-lg border text-slate-400 hover:text-slate-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors",
+                "border-slate-200 bg-white dark:border-white/10 dark:bg-slate-900 dark:hover:text-white dark:hover:border-white/20",
+                FOCUS_RING,
+              )}
+            >
+              <ChevronRight size={14} />
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Result count for screen readers + footer */}
       <p
         className="px-1 text-xs text-slate-400"
         role="status"
         aria-live="polite"
       >
-        Showing {rows.length} of {data.length}
-        {data.length === 1 ? " row" : " rows"}
+        {pageSize && pageSize > 0 && rows.length > 0
+          ? `${(safePage - 1) * pageSize + 1}–${Math.min(safePage * pageSize, rows.length)} of ${rows.length}${rows.length === 1 ? " row" : " rows"}`
+          : `Showing ${rows.length} of ${data.length}${data.length === 1 ? " row" : " rows"}`
+        }
       </p>
     </div>
   );

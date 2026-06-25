@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 // Fixes issue 454: responsive navigation variants
 import { Search, X } from "lucide-react";
+import { useFocusTrap } from "@/hooks/useFocusTrap";
 import WalletConnectButton from "./WalletConnectButton";
 import { ThemeToggle } from "./ThemeToggle";
 import { NotificationToggle } from "./notifications/NotificationToggle";
@@ -18,6 +19,8 @@ export function Navbar() {
   const { user, signOut } = useAuth();
   const { messages } = useI18n();
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
+  const mobileSearchRef = useRef<HTMLDivElement>(null);
+  useFocusTrap(mobileSearchRef, isMobileSearchOpen);
 
   useEffect(() => {
     if (!isMobileSearchOpen) return;
@@ -36,9 +39,9 @@ export function Navbar() {
 
         <NavLinks />
 
-        <div className="hidden md:block md:flex-1 md:max-w-xl">
+        <search className="hidden md:block md:flex-1 md:max-w-xl">
           <GlobalSearch placeholder="Search pages, actions, or records" />
-        </div>
+        </search>
 
         <div className="ml-auto flex items-center gap-2 sm:gap-3 md:gap-4">
           <button
@@ -87,6 +90,7 @@ export function Navbar() {
 
       {isMobileSearchOpen && (
         <div
+          ref={mobileSearchRef}
           className="fixed inset-0 z-[80] bg-slate-950/90 backdrop-blur-md md:hidden"
           role="dialog"
           aria-modal="true"

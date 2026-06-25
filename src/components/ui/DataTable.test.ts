@@ -8,6 +8,8 @@ import {
   cycleSortDirection,
   distinctValues,
   filterRows,
+  getPaginatedSlice,
+  getTotalPages,
   sortRows,
 } from "./dataTable.utils";
 
@@ -99,4 +101,41 @@ test("ariaSortValue reflects active column + direction", () => {
   assert.equal(ariaSortValue(true, "desc"), "descending");
   assert.equal(ariaSortValue(false, "asc"), "none");
   assert.equal(ariaSortValue(true, null), "none");
+});
+
+test("getTotalPages returns correct page count", () => {
+  assert.equal(getTotalPages(0, 20), 1);
+  assert.equal(getTotalPages(20, 20), 1);
+  assert.equal(getTotalPages(21, 20), 2);
+  assert.equal(getTotalPages(40, 20), 2);
+  assert.equal(getTotalPages(41, 20), 3);
+});
+
+test("getTotalPages returns 0 for pageSize 0 or negative (show all mode)", () => {
+  assert.equal(getTotalPages(100, 0), 0);
+  assert.equal(getTotalPages(100, -1), 0);
+});
+
+test("getPaginatedSlice splits data correctly across pages", () => {
+  const items = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+  assert.deepEqual(getPaginatedSlice(items, 1, 3), [1, 2, 3]);
+  assert.deepEqual(getPaginatedSlice(items, 2, 3), [4, 5, 6]);
+  assert.deepEqual(getPaginatedSlice(items, 3, 3), [7, 8, 9]);
+  assert.deepEqual(getPaginatedSlice(items, 4, 3), [10]);
+});
+
+test("getPaginatedSlice returns all rows when pageSize is 0", () => {
+  const items = [1, 2, 3, 4, 5];
+  assert.deepEqual(getPaginatedSlice(items, 1, 0), items);
+  assert.deepEqual(getPaginatedSlice(items, 5, 0), items);
+});
+
+test("getPaginatedSlice handles empty data", () => {
+  assert.deepEqual(getPaginatedSlice([], 1, 20), []);
+  assert.deepEqual(getPaginatedSlice([], 1, 0), []);
+});
+
+test("getPaginatedSlice handles out-of-range page gracefully", () => {
+  const items = [1, 2, 3, 4, 5];
+  assert.deepEqual(getPaginatedSlice(items, 10, 3), []);
 });

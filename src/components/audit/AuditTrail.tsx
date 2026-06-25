@@ -238,25 +238,38 @@ export function AuditTrail() {
       {/* Pagination controls */}
       {totalPages > 1 && (
         <div className="audit-pagination" role="navigation" aria-label="Audit trail pages">
-          <button
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
-            disabled={safePage === 1}
-            aria-label="Previous page"
-            className="audit-page-btn"
-          >
-            ‹
-          </button>
-          <span className="audit-page-info">
-            Page {safePage} of {totalPages}
-          </span>
-          <button
-            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-            disabled={safePage === totalPages}
-            aria-label="Next page"
-            className="audit-page-btn"
-          >
-            ›
-          </button>
+          <div className="audit-page-info">
+            {(safePage - 1) * PAGE_SIZE + 1}–{Math.min(safePage * PAGE_SIZE, filteredEvents.length)} of <span className="audit-page-total">{filteredEvents.length}</span>
+          </div>
+          <div className="audit-page-buttons">
+            <button
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={safePage === 1}
+              aria-label="Previous page"
+              className="audit-page-btn"
+            >
+              ‹
+            </button>
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((n) => (
+              <button
+                key={n}
+                onClick={() => setPage(n)}
+                aria-label={`Page ${n}`}
+                aria-current={n === safePage ? "page" : undefined}
+                className={`audit-page-num ${n === safePage ? "audit-page-num-active" : ""}`}
+              >
+                {n}
+              </button>
+            ))}
+            <button
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={safePage === totalPages}
+              aria-label="Next page"
+              className="audit-page-btn"
+            >
+              ›
+            </button>
+          </div>
         </div>
       )}
 
@@ -537,9 +550,25 @@ export function AuditTrail() {
         .audit-pagination {
           display: flex;
           align-items: center;
-          justify-content: center;
+          justify-content: space-between;
           gap: 16px;
           padding: 12px 0 4px;
+          flex-wrap: wrap;
+        }
+
+        .audit-page-info {
+          font-size: 13px;
+          color: #94a3b8;
+        }
+
+        .audit-page-total {
+          color: #e2e8f0;
+        }
+
+        .audit-page-buttons {
+          display: flex;
+          align-items: center;
+          gap: 4px;
         }
 
         .audit-page-btn {
@@ -567,9 +596,37 @@ export function AuditTrail() {
           border-color: rgba(148, 163, 184, 0.4);
         }
 
-        .audit-page-info {
-          font-size: 13px;
+        .audit-page-num {
+          background: transparent;
+          border: 1px solid rgba(148, 163, 184, 0.2);
+          border-radius: 8px;
           color: #94a3b8;
+          width: 36px;
+          height: 36px;
+          font-size: 13px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: color 0.15s, background 0.15s, border-color 0.15s;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .audit-page-num:hover {
+          color: #e2e8f0;
+          border-color: rgba(148, 163, 184, 0.4);
+        }
+
+        .audit-page-num-active {
+          background: #0ea5e9;
+          color: #fff;
+          border-color: #0ea5e9;
+        }
+
+        .audit-page-num-active:hover {
+          background: #0284c7;
+          color: #fff;
+          border-color: #0284c7;
         }
 
         /* Responsive */

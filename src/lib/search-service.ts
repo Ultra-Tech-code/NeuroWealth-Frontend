@@ -3,6 +3,8 @@ import {
   searchMockIndex,
 } from "@/lib/mock-search-index";
 
+export const SEARCH_DEBOUNCE_MS = 300;
+
 export interface SearchDataProvider {
   search(query: string): Promise<GroupedSearchResults>;
 }

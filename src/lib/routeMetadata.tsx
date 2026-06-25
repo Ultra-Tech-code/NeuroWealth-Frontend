@@ -119,7 +119,7 @@ const appRouteDefinitions: AppRouteDefinition[] = [
     dashboardNav: {},
     commandPalette: true,
   },
-  { href: "/dashboard/sandbox", label: "Sandbox", icon: SlidersHorizontal },
+  { href: "/dashboard/sandbox", label: "Sandbox", icon: SlidersHorizontal, devOnly: true },
   {
     href: "/dashboard/settings",
     label: "Settings",
