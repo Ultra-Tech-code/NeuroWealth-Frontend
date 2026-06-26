@@ -23,6 +23,7 @@ import {
 import { ApiRequestError, apiRequest } from "@/lib/api-client";
 import { useSandbox, ScenarioType } from "@/contexts/SandboxContext";
 import { AllocationChart } from "./AllocationChart";
+import { ErrorBlock } from "@/components/ui/ErrorBlock";
 
 type ThemeMode = "light" | "dark";
 
@@ -194,6 +195,7 @@ export function PortfolioDashboard() {
   const [portfolio, setPortfolio] = useState<PortfolioPayload | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [retryNonce, setRetryNonce] = useState(0);
 
   const theme = getTheme(searchParams);
   const scenario = getScenario(searchParams, mapScenarioTypeToPortfolio(getCurrentScenario("portfolio")));
@@ -238,7 +240,7 @@ export function PortfolioDashboard() {
     void loadPortfolio();
 
     return () => controller.abort();
-  }, [scenario]);
+  }, [scenario, retryNonce]);
 
   function updateParam(key: "scenario" | "theme", value: string) {
     const nextParams = new URLSearchParams(searchParams.toString());
@@ -251,6 +253,10 @@ export function PortfolioDashboard() {
 
   function resetToLivePreview() {
     updateParam("scenario", "live");
+  }
+
+  function retryPortfolio() {
+    setRetryNonce((value) => value + 1);
   }
 
   const summaryCards = portfolio
@@ -379,22 +385,13 @@ export function PortfolioDashboard() {
           </div>
 
           {error && !portfolio ? (
-            <div className={`${styles.card} ${styles.errorState}`}>
-              <h2 className={styles.errorTitle}>
-                Portfolio widgets unavailable
-              </h2>
-              <p className={styles.errorCopy}>
-                {error} The dashboard can retry once connectivity to the
-                portfolio API is restored.
-              </p>
-              <button
-                className={styles.emptyButton}
-                onClick={resetToLivePreview}
-                type="button"
-              >
-                Retry widgets
-              </button>
-            </div>
+            <ErrorBlock
+              className={styles.card}
+              title="Portfolio widgets unavailable"
+              description={`${error} Retry once connectivity to the portfolio API is restored.`}
+              actionLabel="Retry widgets"
+              onAction={retryPortfolio}
+            />
           ) : (
             <>
               <div className={styles.summaryGrid}>
