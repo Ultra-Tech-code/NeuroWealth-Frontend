@@ -4,6 +4,21 @@ This repository contains the Next.js frontend for NeuroWealth. It's a demo-ready
 
 **Assumptions**: This frontend targets the **Stellar testnet** by default (`NEXT_PUBLIC_STELLAR_NETWORK=testnet`). For production, configure `NEXT_PUBLIC_STELLAR_NETWORK=mainnet` and provide a real API backend via `NEUROWEALTH_API_BASE_URL`.
 
+## Package manager
+
+This project uses **Yarn 1 (Classic)** as the package manager. The exact version is pinned in the
+`packageManager` field of `package.json` (`yarn@1.22.22`).
+
+**Do not use `npm install` or `pnpm install`** — they will produce a different lockfile format and
+break the Corepack pin. Always run `yarn install` to install dependencies.
+
+The lockfile (`yarn.lock`) is committed to the repository. After adding or upgrading packages,
+commit the updated `yarn.lock` alongside the `package.json` change.
+
+Next.js uses the **SWC compiler** for both development (Fast Refresh) and production builds.
+No Babel configuration is present; SWC is the default when using Next.js 13+. The SWC binary
+is resolved automatically by Next.js — no extra install step is needed.
+
 ## Quick start
 
 Requirements: Node.js 20+, Yarn (Corepack supported)
@@ -11,6 +26,10 @@ Requirements: Node.js 20+, Yarn (Corepack supported)
 Install and run:
 
 ```bash
+# Enable the pinned yarn version via Corepack (run once per machine)
+corepack enable
+corepack prepare
+
 yarn install
 yarn dev
 ```
