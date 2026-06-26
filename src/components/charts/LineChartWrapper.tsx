@@ -1,7 +1,7 @@
 "use client";
 
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from "recharts";
-import { BaseChart, ChartTooltip } from "./BaseChart";
+import { BaseChart, ChartTooltip, type ChartTooltipFormatter } from "./BaseChart";
 import { chartTheme, chartDimensions } from "@/lib/chart-theme";
 import type { ChartDatum } from "@/lib/mock-chart-data";
 
@@ -15,7 +15,7 @@ interface LineChartWrapperProps<T extends ChartDatum> {
   color?: string;
   strokeWidth?: number;
   dot?: boolean | object;
-  formatter?: (value: any, name: string) => [string, string];
+  formatter?: ChartTooltipFormatter;
 }
 
 export function LineChartWrapper<T extends ChartDatum = ChartDatum>({
