@@ -16,6 +16,7 @@ const nextConfig = {
   },
   // Enable experimental optimisation for package imports
   experimental: {
+    instrumentationHook: true,
     optimizePackageImports: ["lucide-react"],
   },
 };
