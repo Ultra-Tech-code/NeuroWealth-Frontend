@@ -1,7 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { computeNextIndex } from "@/components/search/GlobalSearch";
+import {
+  computeNextIndex,
+  createLatestRequestTracker,
+} from "@/components/search/GlobalSearch";
 import {
   GroupedSearchResults,
   hasAnySearchResults,
@@ -40,6 +43,66 @@ test("computeNextIndex returns -1 when total is 0", () => {
 
 test("computeNextIndex clamps out-of-range current to 0", () => {
   assert.equal(computeNextIndex(99, 1, 5), 0);
+});
+
+// ── createLatestRequestTracker (race safety, #365) ───────────────────────────
+
+test("tracker: a response for the latest request is applied", () => {
+  const tracker = createLatestRequestTracker();
+  const id = tracker.start();
+  assert.equal(tracker.isStale(id), false);
+});
+
+test("tracker: rapid typing supersedes the earlier in-flight request", () => {
+  const tracker = createLatestRequestTracker();
+  // User types, fires a search, then types again before the first resolves.
+  const first = tracker.start();
+  const second = tracker.start();
+
+  // Slow first response arrives after the second query started → dropped.
+  assert.equal(tracker.isStale(first), true);
+  // Newer query's response is still applied.
+  assert.equal(tracker.isStale(second), false);
+});
+
+test("tracker: out-of-order resolution never lets a stale result win", () => {
+  const tracker = createLatestRequestTracker();
+  const first = tracker.start();
+  const second = tracker.start();
+
+  // Even if the second resolves first and the first resolves last,
+  // the first remains stale and cannot overwrite the newer results.
+  assert.equal(tracker.isStale(second), false);
+  assert.equal(tracker.isStale(first), true);
+});
+
+test("tracker: invalidate() drops the in-flight request (clear / navigate / unmount)", () => {
+  const tracker = createLatestRequestTracker();
+  const id = tracker.start();
+  tracker.invalidate();
+
+  // A late response after clearing the query can no longer repopulate.
+  assert.equal(tracker.isStale(id), true);
+});
+
+test("tracker: a fresh request after invalidate is honoured again", () => {
+  const tracker = createLatestRequestTracker();
+  tracker.start();
+  tracker.invalidate();
+
+  const next = tracker.start();
+  assert.equal(tracker.isStale(next), false);
+});
+
+test("tracker: ids are strictly increasing across starts and invalidations", () => {
+  const tracker = createLatestRequestTracker();
+  const a = tracker.start();
+  const b = tracker.start();
+  tracker.invalidate();
+  const c = tracker.start();
+
+  assert.ok(b > a);
+  assert.ok(c > b);
 });
 
 // ── hasAnySearchResults ──────────────────────────────────────────────────────
